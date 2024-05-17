@@ -10,7 +10,7 @@ def login():
     print("Username entered:", username)
     print("Password entered:", password)
     sukses = False
-    with open('C:\Praktikum prokom\petshop1\petshop\login.csv', 'r') as file:
+    with open('C:\Praktikum prokom\ProjectPetshop\data\login.csv', 'r') as file:
         reader = csv.reader(file)
         for row in reader:
             a, b, c = row
@@ -24,7 +24,6 @@ def login():
     else:
         messagebox.showerror(title="Error", message="Invalid login.")
     
-
 def halaman_login():
     global window
     window = tk.Tk()
@@ -32,29 +31,40 @@ def halaman_login():
     window.geometry("1166x718")
     window.configure(bg="Pink")
     window.resizable(True, True)
-    
+
     frame = tk.Frame(window, width=350, height=350, bg="White")
     frame.place(x=660, y=200)
 
     heading = Label(frame, text="Login", fg="#de5d83", bg="White", font=("Candy Beans", 23))
     heading.place(x=135, y=10)
 
-    global username_entry
-    global password_entry
-    username_entry = Entry(frame, width=25, fg="White", border="2", bg="#de5d83", font=(11))
-    username_entry.place(x=35, y=75)
+    global username_entry, password_entry
+    username_label = Label(frame, text="Username", fg="#de5d83", font=(7))
+    username_label.place(x=15, y=50)  # Adjust label position for alignment
+    username_entry = Entry(frame, width=20, fg="White", border="2", bg="#de5d83", font=(11))
+    username_entry.place(x=110, y=50)  # Adjust entry position for alignment
 
-    password_entry = Entry(frame, width=25, fg="White", border="2", bg="#de5d83", font=(11))
-    password_entry.place(x=35, y=115)
+    password_label = Label(frame, text="Password", fg="#de5d83", font=(7))
+    password_label.place(x=15, y=90)  # Adjust label position for alignment
+    password_entry = Entry(frame, show="*", width=20, fg="White", border="2", bg="#de5d83", font=(11))
+    password_entry.place(x=110, y=90)  # Adjust entry position for alignment
 
-    img = PhotoImage(file=r"C:\Praktikum prokom\petshop1\petshop\kiwkiw 2.png")
-
+    img = PhotoImage(file="C:\Praktikum prokom\ProjectPetshop\image\kiwkiw 2.png")  # Adjust the image path
     label_gambar = Label(window, image=img, bg="Pink")
-    label_gambar.place(x=100,y=200)
+    label_gambar.place(x=100, y=200)
+    def toggle_password():
+        current_show = password_entry.cget("show")
+        if current_show == '':
+            password_entry.config(show="*")  # Hide password
+        else:
+            password_entry.config(show="")   # Show password
 
-    Button(frame, width=38, height=1, text="Login", fg="white", bg="#de5d83", command=login).place(x=37, y=155) 
-    Button(frame, width=38, height=1, text="Register", fg="white", bg="#de5d83", command=halaman_register).place(x=37, y=185) 
-    
+    show_hide_button = Button(frame, width=7, height=1, text="Show", fg="white", bg="#de5d83", command=toggle_password)
+    show_hide_button.place(x=270, y=90)  # Adjust button position for alignment
+
+    Button(frame, width=38, height=1, text="Login", fg="white", bg="#de5d83", command=login).place(x=37, y=155)
+    Button(frame, width=38, height=1, text="Register", fg="white", bg="#de5d83", command=halaman_register).place(x=37, y=185)
+
     window.mainloop()
 
 def signup():
@@ -88,7 +98,7 @@ def signup():
             verif = otp_entry.get()
             if verif == kode_otp:
                 # Write data to login.csv
-                with open('C:\Praktikum prokom\petshop1\petshop\login.csv', 'a', newline="") as file:
+                with open('C:\Praktikum prokom\ProjectPetshop\data\login.csv', 'a', newline="") as file:
                     writer = csv.writer(file)
                     writer.writerow([name, password, email])
                 messagebox.showinfo(title="Success", message="Register berhasil, silahkan login")
@@ -129,7 +139,7 @@ def halaman_register():
     Button(frame, width=38, height=1, text="Sign up", fg = "white", bg ="#de5d83", command=signup).place(x=40,y=185) 
     Button(frame, width=10, height=1, text="Back", fg = "Black", border = 0, command=back_login).place(x=0,y=0)
 
-    img = PhotoImage(file=r"C:\Praktikum prokom\petshop1\petshop\kiwkiw 2.png")
+    img = PhotoImage(file="C:\Praktikum prokom\ProjectPetshop\image\kiwkiw 2.png")
 
     # Place label_gambar after buttons
     label_gambar = Label(window_register, image=img, bg="Pink")
