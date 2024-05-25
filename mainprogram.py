@@ -1,9 +1,18 @@
 import csv
+import smtplib
 import random
 import datetime
 import pandas as pd
 import shortcut_pandas as ps
-
+import os
+import platform
+import openai
+from fpdf import FPDF
+import pandas as pd
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
+from email.mime.text import MIMEText
 def begin():
     print("=" * 50)
     print("\n          SELAMAT DATANG DI KIWKIW PETSHOP\n")
@@ -14,6 +23,7 @@ def begin():
     while True:
         option = input("Silahkan masukkan: ")
         if option == '1':
+            clear_screen()
             login()
             break
         elif option == '2':
@@ -21,7 +31,11 @@ def begin():
             break
         else:
             print('Input tidak valid')
-
+def clear_screen():
+    if platform.system() == "Windows":
+        os.system('cls')
+    else:
+        os.system('clear')
 # Function for user login
 def login():
     global name
@@ -29,7 +43,7 @@ def login():
     name = input("Masukkan Username : ")
     password = input("Masukkan Password : ")
     sukses = False
-    with open('login.csv', 'r') as file:
+    with open(r'C:\Praktikum prokom\ProjectPetshop\data\login.csv', 'r') as file:
         reader = csv.reader(file)
         for row in reader:
             a, b, c = row
@@ -73,7 +87,7 @@ def signup():
             print("=" * 50)
             print("Register berhasil, silahkan login")
             print("=" * 50)
-            with open('login.csv', 'a', newline="") as file:
+            with open(r'C:\Praktikum prokom\ProjectPetshop\data\login.csv', 'a', newline="") as file:
               writer = csv.writer(file)
               writer.writerow([name, password, email])
             begin()
@@ -87,7 +101,6 @@ def email_form(email):
     if "@" in email and "." in email:
         return True
     return False
-
 # Function to display the main menu and handle user choices
 def menu():
     global opsi_transaksi
@@ -102,7 +115,7 @@ def menu():
 
     if option == '1':
         opsi_transaksi = 1
-        with open('Daftar_Produk.csv', 'r', encoding='utf-8') as file:
+        with open(r'C:\Praktikum prokom\ProjectPetshop\data\Daftar_Produk.csv.csv', 'r', encoding='utf-8') as file:
             reader = csv.reader(file)
             data = list(reader)
 
@@ -116,7 +129,7 @@ def menu():
 
     elif option == '2':
         opsi_transaksi = 2
-        with open('Daftar_Peralatan.csv', 'r', encoding='utf-8') as file:
+        with open(r'C:\Praktikum prokom\ProjectPetshop\data\Daftar_Peralatan.csv.csv', 'r', encoding='utf-8') as file:
             reader = csv.reader(file)
             data = list(reader)
 
@@ -129,10 +142,13 @@ def menu():
         transaksi_peralatan()
 
     elif option == '3':
-        pass
+        layanan ()
 
-    elif option == '4':
-        pass
+    elif option == '4':       
+        pdf_filename = generate_transaction_pdf(email_user)
+        if pdf_filename:
+            send_email_with_pdf(email_user, pdf_filename)
+
 
     elif option == '5':
         print("\nTerima kasih telah menggunakan KiwKiw Petshop!")
@@ -158,7 +174,7 @@ def process_purchase():
 
         if 1 <= product_id <= 10:
             # Load product data from CSV
-            with open("Daftar_Produk.csv", "r") as file:
+            with open(r"C:\Praktikum prokom\ProjectPetshop\data\Daftar_Produk.csv", "r") as file:
                 reader = csv.reader(file)
                 # Skip the header row
                 next(reader)
@@ -195,7 +211,7 @@ def transaksi_peralatan():
 
         if 1 <= product_id <= 10:
             # Load product data from CSV
-            with open("Daftar_Peralatan.csv", "r") as file:
+            with open(r"C:\Praktikum prokom\ProjectPetshop\data\Daftar_Peralatan.csv", "r") as file:
                 reader = csv.reader(file)
                 # Skip the header row
                 next(reader)
@@ -237,18 +253,192 @@ def transaksi_peralatan():
             print(f"Email instruksi pembayaran telah dikirim ke {email_address}.")
 
         # Save transaction data to CSV
-        save_transaction_data(cart, total_price, payment_method, current_time)
+        save_transaction_data(cart, total_price, payment_method, current_time, email_user)
 
         # Display transaction confirmation
         print("\nTransaksi berhasil!")
 
-def save_transaction_data(cart, total_price, payment_method, current_time):
+def save_transaction_data(cart, total_price, payment_method, current_time, email_user):
     """Saves transaction data to a CSV file."""
-    with open("data_transaksi.csv", "a", newline="") as file:
+    with open(r"C:\Praktikum prokom\ProjectPetshop\data\data_transaksi.csv", "a", newline="") as file:
         writer = csv.writer(file)
         transaction_details = [current_time, ", ".join([item["Nama Produk"] for item in cart]),
-                               total_price, payment_method]
+                               total_price, payment_method, email_user]
         writer.writerow(transaction_details)
+def layanan():
+    print("\nPilih Layanan yang tersedia:")
+    print("Ketik '1' untuk Grooming")
+    print("Ketik '2' untuk Konsultasi")
+    option = input("\nPilih layanan : ")
 
-# Mulai program
+    if option == '1':
+        jadwal_grooming()
+    elif option == '2':
+        konsultasi()
+    else:
+        print("Pilihan tidak valid. Silakan pilih lagi.")
+
+def jadwal_grooming():
+    print("--JADWAL BUKA KIW KIW PETSHOP--\n")
+    print("       08.00 - 15.00          \n")
+    def struk_grooming(name, email):
+        ps.struk_konsultasi(name, email,tanggal,waktu_awal, waktu_akhir)    
+    
+    print("\nMasukkan Tanggal dan Waktu Grooming Anda:")
+    
+    tanggal = input("Masukkan tanggal (format: YYYY-MM-DD): ")
+    waktu_awal = input("Masukkan waktu mulai (format: HH:MM): ")
+    waktu_akhir = input("Masukkan waktu selesai (format: HH:MM): ")
+    
+    try:
+        datetime.datetime.strptime(tanggal, '%Y-%m-%d')
+        datetime.datetime.strptime(waktu_awal, '%H:%M')
+        datetime.datetime.strptime(waktu_akhir, '%H:%M')
+    except ValueError:
+        print("Format tanggal atau waktu tidak valid. Silakan coba lagi.")
+        return
+
+    waktu_buka = datetime.time(8, 0)  # Waktu buka petshop
+    waktu_tutup = datetime.time(15, 0)  # Waktu tutup petshop
+    clear_screen()
+    struk_grooming(name, email_user)
+    if waktu_awal >= waktu_akhir:
+        print("Waktu mulai harus sebelum waktu selesai. Silakan coba lagi.")
+        return
+
+    if not (waktu_buka <= datetime.datetime.strptime(waktu_awal, '%H:%M').time() < waktu_tutup):
+        print("Grooming hanya tersedia dari jam 8 pagi sampai 3 sore. Silakan pilih waktu di antara waktu tersebut.")
+        return
+
+    if not (waktu_buka <= datetime.datetime.strptime(waktu_akhir, '%H:%M').time() < waktu_tutup):
+        print("Grooming hanya tersedia dari jam 8 pagi sampai 3 sore. Silakan pilih waktu di antara waktu tersebut.")
+        return
+
+    print("\nJadwal Grooming Anda:")
+    print(f"Tanggal: {tanggal}")
+    print(f"Waktu: {waktu_awal} - {waktu_akhir}")
+    balik = input("\n\nApakah anda ingin menggunakan layanan kami Lagi (1/0)?\n(1 = iya, 0 = tidak) : ")
+    if  balik == '1':
+        return menu()
+    elif balik == '2':
+        pass
+
+
+
+openai.api_key = 'sk-proj-hkJyLIhzoVcs4V060kXVT3BlbkFJnMG8gxhRc7GK4etVR7Ec'
+#Fungsi memanggil chatgpt AI
+def get_ai_response(question):
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",  # Use the appropriate model
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": question}
+        ]
+    )
+    return response.choices[0].message['content'].strip()
+
+def konsultasi():
+    print("Biaya konsultasi adalah Rp100.000,-")
+    print("Silakan membayar untuk memulai konsultasi.")
+    process_non_tunai_payment(name, email_user)
+    sudah = input("Ketik 1 jika sudah membayar (0 jika cancel): ")
+    clear_screen()
+    if sudah == '0' :
+        print("TERIMAKASIH TELAH MENGGUNAKAN JASA KONSULTASI KAMI")
+    elif sudah == '1':
+        print("-------------------------------------------------")
+        pertanyaan = input("Silakan ketik pertanyaan Anda: ")
+
+        print("\nPertanyaan:", pertanyaan)
+        print("Konsultan Menjawab...\n")
+        answer = get_ai_response(pertanyaan)
+        print("Jawaban Konsultan :", answer)
+    else:
+        print("Pilihan tidak valid. Silakan coba lagi.")
+def process_non_tunai_payment(name, email):
+    amount = 100000
+    ps.send_invoice_email(name, amount, email)
+    balik = input("\n\nApakah anda ingin menggunakan layanan kami Lagi(1/0)?\n(1 = iya, 0 = tidak) : ")
+    if  balik == '1':
+        return menu()
+    elif balik == '2':
+        pass
+def generate_transaction_pdf(email_user):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+
+    # Header
+    pdf.cell(200, 10, txt="Laporan Transaksi KiwKiw Petshop", ln=True, align='C')
+    pdf.ln(10)
+
+    # Table Header
+    pdf.cell(40, 10, txt="Tanggal", border=1)
+    pdf.cell(80, 10, txt="Produk", border=1)
+    pdf.cell(30, 10, txt="Total Harga", border=1)
+    pdf.cell(40, 10, txt="Metode Pembayaran", border=1)
+    pdf.ln()
+
+    # Read transaction data
+    transactions = []
+    with open(r'C:\Praktikum prokom\ProjectPetshop\data\data_transaksi.csv', 'r') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            date, products, total, payment_method, email = row
+            if email == email_user:
+                transactions.append(row)
+
+    if not transactions:
+        print("Tidak ada transaksi untuk email ini.")
+        return None
+
+    # Add transactions to PDF
+    for transaction in transactions:
+        pdf.cell(40, 10, txt=transaction[0], border=1)
+        pdf.cell(80, 10, txt=transaction[1], border=1)
+        pdf.cell(30, 10, txt=transaction[2], border=1)
+        pdf.cell(40, 10, txt=transaction[3], border=1)
+        pdf.ln()
+
+    # Save PDF
+    pdf_filename = f"transaksi_{email_user}.pdf"
+    pdf.output(pdf_filename)
+    return pdf_filename
+
+def send_email_with_pdf(email_user, pdf_filename):
+    smtp_server = "smtp.gmail.com"
+    smtp_port = 587
+    smtp_username = "petshopkiwkiw@gmail.com"
+    smtp_password = "huna bhnh uinc zpgb"
+
+    msg = MIMEMultipart()
+    msg['From'] = smtp_username
+    msg['To'] = email_user
+    msg['Subject'] = "Laporan Transaksi KiwKiw Petshop"
+
+    body = "Terlampir adalah laporan transaksi Anda."
+    msg.attach(MIMEText(body, 'plain'))
+
+    # Attach PDF
+    with open(pdf_filename, "rb") as attachment:
+        part = MIMEBase("application", "octet-stream")
+        part.set_payload(attachment.read())
+    encoders.encode_base64(part)
+    part.add_header(
+        "Content-Disposition",
+        f"attachment; filename= {pdf_filename}",
+    )
+    msg.attach(part)
+
+    try:
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()
+        server.login(smtp_username, smtp_password)
+        server.send_message(msg)
+        print("Email dengan laporan transaksi telah berhasil dikirim ke email anda!")
+    except Exception as e:
+        print(f"Gagal mengirim email: {e}")
+    finally:
+        server.quit()
+
 begin ()
