@@ -35,15 +35,23 @@ def login():
     username = username_entry.get()
     password = password_entry.get()
     sukses = False
-    with open('C:\Praktikum prokom\ProjectPetshop\data\login.csv', 'r') as file:
-        reader = csv.reader(file)
-        for row in reader:
-            a, b, c = row
-            print("Checking:", a, b)
-            if username == a and password == b:
-                sukses = True
-                break
-    if sukses == True:
+    try:
+        with open('data/login.csv', 'r') as file:  # Fixed the file path
+            reader = csv.reader(file)
+            for row in reader:
+                a, b, c = row
+                print("Checking:", a, b)
+                if username == a and password == b:
+                    sukses = True
+                    break
+    except FileNotFoundError as e:
+        messagebox.showerror(title="Error", message=f"File not found: {e}")
+        return
+    except Exception as e:
+        messagebox.showerror(title="Error", message=f"An error occurred: {e}")
+        return
+
+    if sukses:
         messagebox.showinfo(title="Login Success", message="You successfully logged in.")
         window.withdraw()  # Hide the login window
         email_user = ps.get_email_by_username(username)
@@ -52,14 +60,8 @@ def login():
         print("=" * 50)
         print("Username atau Password yang anda masukkan salah")
         print("=" * 50)
-        login()
-
-    if sukses:
-        messagebox.showinfo(title="Login Success", message="You successfully logged in.")
-        window.withdraw()  # Hide the login window
-        halaman_menu()  # Open the menu window
-    else:
         messagebox.showerror(title="Error", message="Invalid login.")
+
 
 def signup():
     name = username.get()
@@ -91,11 +93,14 @@ def signup():
             def verify_otp():
                 verif = otp_entry.get()
                 if verif == kode_otp:
-                    with open('C:/Praktikum prokom/ProjectPetshop/data/login.csv', 'a', newline="") as file:
-                        writer = csv.writer(file)
-                        writer.writerow([name, password, email])
-                    messagebox.showinfo(title="Success", message="Register berhasil, silahkan login")
-                    otp_window.destroy()
+                    try:
+                        with open('data/login.csv', 'a', newline="") as file:  # Fixed the file path
+                            writer = csv.writer(file)
+                            writer.writerow([name, password, email])
+                        messagebox.showinfo(title="Success", message="Register berhasil, silahkan login")
+                        otp_window.destroy()
+                    except Exception as e:
+                        messagebox.showerror(title="Error", message=f"An error occurred while saving data: {e}")
                 else:
                     messagebox.showerror(title="Error", message="Kode OTP tidak valid, silahkan input dengan benar!")
 
@@ -106,6 +111,7 @@ def signup():
             messagebox.showerror(title="Error", message=f"An error occurred: {e}")
     else:
         messagebox.showerror(title="Error", message="Email tidak valid")
+
 
 def halaman_login():
     global window, username_entry, password_entry
@@ -546,7 +552,7 @@ def totalbeli():
         ringkasan_pesanan += f"\nTotal Harga: Rp{total:,}"
         show_order_summary(ringkasan_pesanan)
 
-        email_user = ps.get_email_by_username()
+        email_user = ps.get_email_by_username(username)
     else:
         messagebox.showinfo("Order Details", "Tidak ada barang yang dipesan.")
 
@@ -569,93 +575,24 @@ def payment_method(method):
     messagebox.showinfo("Metode Pembayaran", f"Anda memilih metode pembayaran: {method}")
 
 def save_transaction_data(cart, subtotal, method, current_time, user_email):
-    with open(r"C:\Praktikum prokom\ProjectPetshop\data\data_transaksi.csv", "a", newline="") as file:
+    with open(r"data\data_transaksi.csv", "a", newline="") as file:
         writer = csv.writer(file)
         transaction_details = [current_time, ", ".join([item["Nama Produk"] for item in cart]), subtotal, method, user_email]
         writer.writerow(transaction_details)
 
 def printout():
-    email_user = get_email_by_username(username_entry)  # Pastikan Anda memiliki cara untuk mendapatkan email pengguna
-    pdf_filename = generate_transaction_pdf(email_user)
-    if pdf_filename:
-        send_email_with_pdf(email_user, pdf_filename)
-
-def generate_transaction_pdf(email_user):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
-
-    # Header
-    pdf.cell(200, 10, txt="Laporan Transaksi KiwKiw Petshop", ln=True, align='C')
-    pdf.ln(10)
-
-    # Table Header
-    pdf.cell(40, 10, txt="Tanggal", border=1)
-    pdf.cell(80, 10, txt="Produk", border=1)
-    pdf.cell(30, 10, txt="Total Harga", border=1)
-    pdf.cell(40, 10, txt="Metode Pembayaran", border=1)
-    pdf.ln()
-
-    # Read transaction data
-    transactions = []
-    with open(r'C:\Praktikum prokom\ProjectPetshop\data\data_transaksi.csv', 'r') as file:
-        reader = csv.reader(file)
-        for row in reader:
-            date, products, total, payment_method, email = row
-            if email == email_user:
-                transactions.append(row)
-
-    if not transactions:
-        print("Tidak ada transaksi untuk email ini.")
-        return None
-
-    # Add transactions to PDF
-    for transaction in transactions:
-        pdf.cell(40, 10, txt=transaction[0], border=1)
-        pdf.cell(80, 10, txt=transaction[1], border=1)
-        pdf.cell(30, 10, txt=transaction[2], border=1)
-        pdf.cell(40, 10, txt=transaction[3], border=1)
-        pdf.ln()
-
-    # Save PDF
-    pdf_filename = f"transaksi_{email_user}.pdf"
-    pdf.output(pdf_filename)
-    return pdf_filename
-
-def send_email_with_pdf(email_user, pdf_filename):
-    smtp_server = "smtp.gmail.com"
-    smtp_port = 587
-    smtp_username = "petshopkiwkiw@gmail.com"
-    smtp_password = "huna bhnh uinc zpgb"
-
-    msg = MIMEMultipart()
-    msg['From'] = smtp_username
-    msg['To'] = email_user
-    msg['Subject'] = "Laporan Transaksi KiwKiw Petshop"
-
-    body = "Terlampir adalah laporan transaksi Anda."
-    msg.attach(MIMEText(body, 'plain'))
-
-    # Attach PDF
-    with open(pdf_filename, "rb") as attachment:
-        part = MIMEBase("application", "octet-stream")
-        part.set_payload(attachment.read())
-    encoders.encode_base64(part)
-    part.add_header(
-        "Content-Disposition",
-        f"attachment; filename= {pdf_filename}",
-    )
-    msg.attach(part)
-
-    try:
-        server = smtplib.SMTP(smtp_server, smtp_port)
-        server.starttls()
-        server.login(smtp_username, smtp_password)
-        server.send_message(msg)
-        server.quit()
-        messagebox.showinfo("Sukses", "Email dengan laporan transaksi telah berhasil dikirim ke email Anda!")
-    except Exception as e:
-        messagebox.showerror("Gagal", f"Gagal mengirim email: {e}")
+    username = username_entry.get()  # Ambil username dari input entry
+    if not username:
+        messagebox.showerror("Error", "Harap masukkan username")
+        return
+    
+    email_user = ps.get_email_by_username(username)  # Mengambil email berdasarkan username
+    if email_user:
+        pdf_filename = ps.generate_transaction_pdf(email_user)
+        if pdf_filename:
+            ps.send_email_with_pdf(email_user, pdf_filename)
+    else:
+        messagebox.showerror("Error", "Username tidak ditemukan")
 
 def back_login():
     reg_window.withdraw()
@@ -664,16 +601,7 @@ def back_login():
 
 def relative_to_assets(path: str) -> Path:
     OUTPUT_PATH = Path(__file__).parent
-    ASSETS_PATH = OUTPUT_PATH / Path(r"C:\\Praktikum prokom\\ProjectPetshop\\image")
+    ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Praktikum prokom\ProjectPetshop\image")
     return ASSETS_PATH / Path(path)
-
-def get_email_by_username(username_entry):
-    with open('C:\Praktikum prokom\ProjectPetshop\data\login.csv', 'r') as file:
-        reader = csv.reader(file)
-        for row in reader:
-            if row[0] == username_entry:
-                return row[2]  # Mengembalikan email dari baris yang sesuai dengan username
-    return None  # Jika username tidak ditemukan
-
 
 halaman_login()
