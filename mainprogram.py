@@ -323,9 +323,7 @@ def jadwal_grooming():
     elif balik == '2':
         pass
 
-
-
-openai.api_key = 'sk-proj-hkJyLIhzoVcs4V060kXVT3BlbkFJnMG8gxhRc7GK4etVR7Ec'
+openai.api_key = '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'
 #Fungsi memanggil chatgpt AI
 def get_ai_response(question):
     response = openai.ChatCompletion.create(
@@ -340,7 +338,6 @@ def get_ai_response(question):
 def konsultasi():
     print("Biaya konsultasi adalah Rp100.000,-")
     print("Silakan membayar untuk memulai konsultasi.")
-    process_non_tunai_payment(name, email_user)
     sudah = input("Ketik 1 jika sudah membayar (0 jika cancel): ")
     clear_screen()
     if sudah == '0' :
@@ -355,6 +352,7 @@ def konsultasi():
         print("Jawaban Konsultan :", answer)
     else:
         print("Pilihan tidak valid. Silakan coba lagi.")
+
 def process_non_tunai_payment(name, email):
     amount = 100000
     ps.send_invoice_email(name, amount, email)
@@ -381,7 +379,7 @@ def generate_transaction_pdf(email_user):
 
     # Read transaction data
     transactions = []
-    with open(r'C:\Praktikum prokom\ProjectPetshop\data\data_transaksi.csv', 'r') as file:
+    with open(r'data/data_beli_peralatan.csv', 'r') as file:
         reader = csv.reader(file)
         for row in reader:
             date, products, total, payment_method, email = row
@@ -404,6 +402,49 @@ def generate_transaction_pdf(email_user):
     pdf_filename = f"transaksi_{email_user}.pdf"
     pdf.output(pdf_filename)
     return pdf_filename
+
+def generate_transaction_pdf(email_user):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+
+    # Header
+    pdf.cell(200, 10, txt="Laporan Transaksi Grooming KiwKiw Petshop", ln=True, align='C')
+    pdf.ln(10)
+
+    # Table Header
+    pdf.cell(40, 10, txt="Tanggal", border=1)
+    pdf.cell(80, 10, txt="Produk", border=1)
+    pdf.cell(30, 10, txt="Total Harga", border=1)
+    pdf.cell(40, 10, txt="Metode Pembayaran", border=1)
+    pdf.ln()
+
+    # Read transaction data
+    transactions = []
+    with open(r'data/data_riwayat_grooming.csv', 'r') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            date, products, total, payment_method, email = row
+            if email == email_user:
+                transactions.append(row)
+
+    if not transactions:
+        print("Tidak ada transaksi untuk email ini.")
+        return None
+
+    # Add transactions to PDF
+    for transaction in transactions:
+        pdf.cell(40, 10, txt=transaction[0], border=1)
+        pdf.cell(80, 10, txt=transaction[1], border=1)
+        pdf.cell(30, 10, txt=transaction[2], border=1)
+        pdf.cell(40, 10, txt=transaction[3], border=1)
+        pdf.ln()
+
+    # Save PDF
+    pdf_filename = f"transaksi_{email_user}.pdf"
+    pdf.output(pdf_filename)
+    return pdf_filename
+
 
 def send_email_with_pdf(email_user, pdf_filename):
     smtp_server = "smtp.gmail.com"
